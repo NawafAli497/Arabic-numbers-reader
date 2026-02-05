@@ -1,35 +1,60 @@
 import javax.sound.sampled.*;
+import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SoundPlayer {
 
-	public static void play(String wavName) {
-	    try {
-	        InputStream is = SoundPlayer.class.getResourceAsStream("/" + wavName);
-	        if (is == null) throw new RuntimeException("WAV not found: " + wavName);
+	// The "Cache" - stores the sound data in memory
+	private static Map<String, Clip> soundCache = new HashMap<>();
 
-	        // IMPORTANT: wrap so AudioSystem can read properly
-	        AudioInputStream audio = AudioSystem.getAudioInputStream(new java.io.BufferedInputStream(is));
+	// 1. Call this ONCE when your program starts (e.g. in main)
+	public static void loadAllSounds(String[] files) {
 
-	        Clip clip = AudioSystem.getClip();
-	        clip.open(audio);
 
-	        if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-	            FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-	            gain.setValue(0.0f); // or 6.0f
-	        }
-
-	        clip.start();
-
-	        // Keep JVM alive until playback ends
-	        Thread.sleep(Math.max(1, clip.getMicrosecondLength() / 920));
-
-	        clip.close();
-	        audio.close();
-
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
+		for (String file : files) {
+			loadSound(file);
+		}
+		System.out.println("All sounds loaded!");
 	}
 
+	public static void loadSound(String filename) {
+		try {
+			InputStream is = SoundPlayer.class.getResourceAsStream("/" + filename);
+			if (is == null) return;
+
+			AudioInputStream audio = AudioSystem.getAudioInputStream(new BufferedInputStream(is));
+			Clip clip = AudioSystem.getClip();
+			clip.open(audio);
+
+			// Save it to the map
+			soundCache.put(filename, clip);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	// 2. This method is now instant because it reads from memory
+	public static void play(String filename) {
+		if (!soundCache.containsKey(filename)) {
+			System.out.println("Sound not found: " + filename);
+			return;
+		}
+
+		Clip clip = soundCache.get(filename);
+
+		// Rewind to the start
+		clip.setFramePosition(0);
+		clip.start();
+
+		// We still need to sleep to prevent them playing on top of each other
+		try {
+			long duration = clip.getMicrosecondLength() / 1000;
+			Thread.sleep(duration - 50); // Small overlap for natural flow
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 }
