@@ -1,212 +1,238 @@
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
-	static String[] soundFiles = new String[15];
-	static int count = 0;
-	
-    public static void main(String[] args){
-    	String realNumber = "";
-    	String number[];
-        int numbvalue;
-    	
-        Scanner input = new Scanner(System.in);
-        
-        realNumber = input.next();   
-        
-    	number = realNumber.split("\\.");
-    	
-    	if(number.length > 2) {
-    		System.out.println("Input is not a number!");
-    		return;
-    	}
-    	
-        for(int i = 0; i < number[0].length(); i++) {
-        	if(!Character.isDigit(number[0].charAt(i))) { // Integer part is a number. Example (100.25) -> this checks if "100" contains no characters.
-        		System.out.println("Input is not a number!");
-        		return;
-        	}
+
+    static String[] soundFiles = new String[50];
+    static int count = 0;
+
+    // ── Sound file → Arabic display text ────────────────────────────────────
+    private static final Map<String, String> SOUND_TEXT = new HashMap<>();
+    static {
+        SOUND_TEXT.put("صفر.wav",              "صفر");
+        SOUND_TEXT.put("واحد.wav",             "واحد");
+        SOUND_TEXT.put("اثنان.wav",            "اثنان");
+        SOUND_TEXT.put("ثلاثه.wav",            "ثلاثة");
+        SOUND_TEXT.put("اربعه.wav",            "أربعة");
+        SOUND_TEXT.put("خمسه.wav",             "خمسة");
+        SOUND_TEXT.put("سته.wav",              "ستة");
+        SOUND_TEXT.put("سبعه.wav",             "سبعة");
+        SOUND_TEXT.put("ثمانيه.wav",           "ثمانية");
+        SOUND_TEXT.put("تسعه.wav",             "تسعة");
+        SOUND_TEXT.put("عشره.wav",             "عشرة");
+        SOUND_TEXT.put("أحدعشر.wav",           "أحد عشر");
+        SOUND_TEXT.put("اثناعشر.wav",          "اثنا عشر");
+        SOUND_TEXT.put("ثلاثةعشر.wav",         "ثلاثة عشر");
+        SOUND_TEXT.put("اربعةعشر.wav",         "أربعة عشر");
+        SOUND_TEXT.put("خمسةعشر.wav",          "خمسة عشر");
+        SOUND_TEXT.put("ستةعشر.wav",           "ستة عشر");
+        SOUND_TEXT.put("سبعةعشر.wav",          "سبعة عشر");
+        SOUND_TEXT.put("ثمانيةعشر.wav",        "ثمانية عشر");
+        SOUND_TEXT.put("تسعةعشر.wav",          "تسعة عشر");
+        SOUND_TEXT.put("عشرون.wav",            "عشرون");
+        SOUND_TEXT.put("ثلاثون.wav",           "ثلاثون");
+        SOUND_TEXT.put("اربعون.wav",           "أربعون");
+        SOUND_TEXT.put("خمسون.wav",            "خمسون");
+        SOUND_TEXT.put("ستون.wav",             "ستون");
+        SOUND_TEXT.put("سبعون.wav",            "سبعون");
+        SOUND_TEXT.put("ثمانون.wav",           "ثمانون");
+        SOUND_TEXT.put("تسعون.wav",            "تسعون");
+        SOUND_TEXT.put("مئه.wav",              "مائة");
+        SOUND_TEXT.put("مئتان.wav",            "مئتان");
+        SOUND_TEXT.put("ثلاثمئه.wav",          "ثلاثمائة");
+        SOUND_TEXT.put("اربعمئه.wav",          "أربعمائة");
+        SOUND_TEXT.put("خمسمئه.wav",           "خمسمائة");
+        SOUND_TEXT.put("ستمئه.wav",            "ستمائة");
+        SOUND_TEXT.put("سبعمئه.wav",           "سبعمائة");
+        SOUND_TEXT.put("ثمانمئه.wav",          "ثمانمائة");
+        SOUND_TEXT.put("تسعمئه.wav",           "تسعمائة");
+        SOUND_TEXT.put("الف.wav",              "ألف");
+        SOUND_TEXT.put("الفان.wav",            "ألفان");
+        SOUND_TEXT.put("الاف.wav",             "آلاف");
+        SOUND_TEXT.put("مليون.wav",            "مليون");
+        SOUND_TEXT.put("و.wav",                "و");
+        SOUND_TEXT.put("فاصله.wav",            "فاصلة");
+        SOUND_TEXT.put("من_عشره.wav",          "من عشرة");
+        SOUND_TEXT.put("من_مئه.wav",           "من مائة");
+        SOUND_TEXT.put("من_الف.wav",           "من ألف");
+        SOUND_TEXT.put("من_عشره_الاف.wav",     "من عشرة آلاف");
+    }
+
+    // ── Public API ───────────────────────────────────────────────────────────
+
+    /** Process a number string; returns sound file array or null if invalid. */
+    public static String[] process(String numberStr) {
+        soundFiles = new String[50];
+        count = 0;
+
+        String[] parts = numberStr.trim().split("\\.");
+        if (parts.length > 2 || parts[0].isEmpty()) return null;
+
+        for (char c : parts[0].toCharArray())
+            if (!Character.isDigit(c)) return null;
+
+        long intPart = Long.parseLong(parts[0]);
+        if (intPart > 1_000_000) return null;
+
+        processInteger((int) intPart);
+
+        if (parts.length > 1) {
+            String decStr = parts[1];
+            if (decStr.isEmpty()) return null;
+
+            for (char c : decStr.toCharArray())
+                if (!Character.isDigit(c)) return null;
+
+            int places;
+            int decValue;
+
+            if (decStr.length() > 4) {
+                int first4 = Integer.parseInt(decStr.substring(0, 4));
+                int fifth  = Character.getNumericValue(decStr.charAt(4));
+                decValue   = first4 + (fifth >= 5 ? 1 : 0);
+                places     = 4;
+            } else {
+                decValue = Integer.parseInt(decStr);
+                places   = decStr.length();
+            }
+
+            soundFiles[count++] = "فاصله.wav";
+            processInteger(decValue);
+
+            switch (places) {
+                case 1: soundFiles[count++] = "من_عشره.wav";      break;
+                case 2: soundFiles[count++] = "من_مئه.wav";       break;
+                case 3: soundFiles[count++] = "من_الف.wav";       break;
+                case 4: soundFiles[count++] = "من_عشره_الاف.wav"; break;
+            }
         }
-        
-    	if(Integer.parseInt(number[0]) > 1000000) { // Anything bigger than a million is not accepted.
-    		System.out.println("Number too big!");
-    		return;
-    	}
-        
-    	if(number.length > 1) { // If there is a fraction.
-	        for(int i = 0; i < number[1].length(); i++) {
-	        	
-	        	if(!Character.isDigit(number[1].charAt(i))) { // Fraction part is a number. Example (100.25) -> this checks if "25" contains no characters.
-	        		System.out.println("Input is not a number!");
-	        		return;
-	        	}
-	        }
-	        
-    	}else {
-    		if(number[0].length() == 1) {
-				ones(Character.getNumericValue(number[0].charAt(0)));
-		    	SoundPlayer.loadSound(soundFiles[0]);
-			    SoundPlayer.play(soundFiles[0]);
 
-				return;
-    		}else if(Integer.parseInt(number[0]) == 1000000) { // If its a million, play abomunif.
-        		abomunif();
-        		return;
-        	}
-    		
-    		
-    		for(int i = number[0].length() - 1; i >= 0 ; i--) {
-    			if(i == 0) {
-    				numbvalue = Integer.parseInt(number[0].substring(number[0].length() - 2)); 
-    				
-    				numbvalue = Character.getNumericValue(number[0].charAt(number[0].length() - 2)) * 10;
-    				if(numbvalue != 0)
-    					tens(numbvalue);
-    			}else if(i == 1) {
-    				numbvalue = Integer.parseInt(number[0].substring(number[0].length() - 2));
-    				
-    				if(numbvalue != 0) {
-    					ones(numbvalue);
-    				}
-    			}else if(i == 2) {
-    				numbvalue = Integer.parseInt(number[0].substring(number[0].length() - 3));
+        return Arrays.copyOf(soundFiles, count);
+    }
 
-    				hundreds(Character.getNumericValue(number[0].charAt(number[0].length() - 3)) * 100);
-    			}else if(i == 3) {
-    				
-    			}else if(i == 4) {
-    				
-    			}else if(i == 5) {
-    			
-    			}else if(i == 6) {
-    				
-    			}
-    			
-    		}
-    	}
-    	
-    	
-    	
-    	SoundPlayer.loadAllSounds(soundFiles);
+    /** Build the Arabic display text from a sound file array. */
+    public static String toArabicText(String[] sounds) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : sounds) {
+            if (s == null) continue;
+            String word = SOUND_TEXT.getOrDefault(s, "");
+            if (!word.isEmpty()) {
+                if (sb.length() > 0) sb.append(" ");
+                sb.append(word);
+            }
+        }
+        return sb.toString();
+    }
 
-		for (int i = 0; i < count; i++) {
-		    SoundPlayer.play(soundFiles[i]);
-		}
-		
+    // ── Command-line entry point ─────────────────────────────────────────────
+    public static void main(String[] args) {
+        Scanner input = new Scanner(System.in);
+        String realNumber = input.next();
+
+        String[] sounds = process(realNumber);
+        if (sounds == null) {
+            System.out.println("Input is not valid!");
+            return;
+        }
+
+        System.out.println(toArabicText(sounds));
+        SoundPlayer.loadAllSounds(sounds);
+        for (String s : sounds) SoundPlayer.play(s);
     }
-    
-    public static void ones(int number) {
-    	boolean flag = false;
-    	if(number > 19) {
-			number = number % 10;
-			flag = true;
-    	}
-    	
-    	if(number == 0) {
-    		return;
-    	}else if(number == 1) {
-    		soundFiles[count++] = "واحد.wav";
-    	}else if(number == 2) {
-    		soundFiles[count++] = "اثنان.wav";
-    	}else if(number == 3) {
-    		soundFiles[count++] = "ثلاثه.wav";
-    	}else if(number == 4) {
-    		soundFiles[count++] = "اربعه.wav";
-    	}else if(number == 5) {
-    		soundFiles[count++] = "خمسه.wav";
-    	}else if(number == 6) {
-    		soundFiles[count++] = "سته.wav";
-    	}else if(number == 7) {
-    		soundFiles[count++] = "سبعه.wav";
-    	}else if(number == 8) {
-    		soundFiles[count++] = "ثمانيه.wav";
-    	}else if(number == 9) {
-    		soundFiles[count++] = "تسعه.wav";
-    	}else if(number == 10) {
-    		soundFiles[count++] = "عشره.wav";
-    	}else if(number == 11) {
-    		soundFiles[count++] = "أحدعشر.wav";
-    	}else if(number == 12) {
-    		soundFiles[count++] = "اثناعشر.wav";
-    	}else if(number == 13) {
-    		soundFiles[count++] = "ثلاثةعشر.wav";
-    	}else if(number == 14) {
-    		soundFiles[count++] = "اربعةعشر.wav";
-    	}else if(number == 15) {
-    		soundFiles[count++] = "خمسةعشر.wav";
-    	}else if(number == 16) {
-    		soundFiles[count++] = "ستةعشر.wav";
-    	}else if(number == 17) {
-    		soundFiles[count++] = "سبعةعشر.wav";
-    	}else if(number == 18) {
-    		soundFiles[count++] = "ثمانيةعشر.wav";
-    	}else if(number == 19) {
-    		soundFiles[count++] = "تسعةعشر.wav";
-    	}
-    	
-    	if(flag) {
-    		soundFiles[count++] = "و.wav";;
-    	}
+
+    // ── Processing logic ─────────────────────────────────────────────────────
+
+    static void processInteger(int n) {
+        if (n == 0)         { soundFiles[count++] = "صفر.wav";    return; }
+        if (n == 1_000_000) { soundFiles[count++] = "مليون.wav";  return; }
+
+        if (n >= 1000) {
+            processThousands(n / 1000);
+            n = n % 1000;
+            if (n > 0) soundFiles[count++] = "و.wav";
+        }
+
+        processUpTo999(n);
     }
-    
-    public static void tens(int number) {
-    	if(number == 20) {
-    		soundFiles[count++] = "عشرون.wav";
-    	}else if(number == 30) {
-    		
-    	}else if(number == 40) {
-    		
-    	}else if(number == 50) {
-    		
-    	}else if(number == 60) {
-    		
-    	}else if(number == 70) {
-    		
-    	}else if(number == 80) {
-    		
-    	}else if(number == 90) {
-    		
-    	}
+
+    static void processThousands(int t) {
+        if      (t == 1)           soundFiles[count++] = "الف.wav";
+        else if (t == 2)           soundFiles[count++] = "الفان.wav";
+        else if (t >= 3 && t <= 10) { addOnesSound(t); soundFiles[count++] = "الاف.wav"; }
+        else                       { processUpTo999(t); soundFiles[count++] = "الف.wav"; }
     }
-    
-    public static void hundreds(int number) {
-    	
-    	System.out.println(number);
-    	
-    	
-    	
-    	
+
+    static void processUpTo999(int n) {
+        if (n == 0) return;
+
+        if (n >= 100) {
+            addHundredsSound(n / 100);
+            n = n % 100;
+            if (n > 0) soundFiles[count++] = "و.wav";
+        }
+
+        if (n > 0) {
+            if (n <= 19) {
+                addOnesSound(n);
+            } else {
+                int units  = n % 10;
+                int tensVal = (n / 10) * 10;
+                if (units > 0) { addOnesSound(units); soundFiles[count++] = "و.wav"; }
+                addTensSound(tensVal);
+            }
+        }
     }
-    
-    
-    public static void thousands(int number) {
-    	
-    	System.out.println(number);
-    	
-    	
-    	
-    	
+
+    static void addOnesSound(int n) {
+        switch (n) {
+            case 1:  soundFiles[count++] = "واحد.wav";      break;
+            case 2:  soundFiles[count++] = "اثنان.wav";     break;
+            case 3:  soundFiles[count++] = "ثلاثه.wav";     break;
+            case 4:  soundFiles[count++] = "اربعه.wav";     break;
+            case 5:  soundFiles[count++] = "خمسه.wav";      break;
+            case 6:  soundFiles[count++] = "سته.wav";       break;
+            case 7:  soundFiles[count++] = "سبعه.wav";      break;
+            case 8:  soundFiles[count++] = "ثمانيه.wav";    break;
+            case 9:  soundFiles[count++] = "تسعه.wav";      break;
+            case 10: soundFiles[count++] = "عشره.wav";      break;
+            case 11: soundFiles[count++] = "أحدعشر.wav";    break;
+            case 12: soundFiles[count++] = "اثناعشر.wav";   break;
+            case 13: soundFiles[count++] = "ثلاثةعشر.wav";  break;
+            case 14: soundFiles[count++] = "اربعةعشر.wav";  break;
+            case 15: soundFiles[count++] = "خمسةعشر.wav";   break;
+            case 16: soundFiles[count++] = "ستةعشر.wav";    break;
+            case 17: soundFiles[count++] = "سبعةعشر.wav";   break;
+            case 18: soundFiles[count++] = "ثمانيةعشر.wav"; break;
+            case 19: soundFiles[count++] = "تسعةعشر.wav";   break;
+        }
     }
-    
-    public static void tensOfThousands(int number) {
-    	
-    	System.out.println(number);
-    	
-    	
-    	
-    	
+
+    static void addTensSound(int n) {
+        switch (n) {
+            case 20: soundFiles[count++] = "عشرون.wav";  break;
+            case 30: soundFiles[count++] = "ثلاثون.wav"; break;
+            case 40: soundFiles[count++] = "اربعون.wav"; break;
+            case 50: soundFiles[count++] = "خمسون.wav";  break;
+            case 60: soundFiles[count++] = "ستون.wav";   break;
+            case 70: soundFiles[count++] = "سبعون.wav";  break;
+            case 80: soundFiles[count++] = "ثمانون.wav"; break;
+            case 90: soundFiles[count++] = "تسعون.wav";  break;
+        }
     }
-    
-    public static void hundredsOfThousands(int number) {
-    	
-    	System.out.println(number);
-    	
-    	
-    	
-    	
+
+    static void addHundredsSound(int h) {
+        switch (h) {
+            case 1: soundFiles[count++] = "مئه.wav";     break;
+            case 2: soundFiles[count++] = "مئتان.wav";   break;
+            case 3: soundFiles[count++] = "ثلاثمئه.wav"; break;
+            case 4: soundFiles[count++] = "اربعمئه.wav"; break;
+            case 5: soundFiles[count++] = "خمسمئه.wav";  break;
+            case 6: soundFiles[count++] = "ستمئه.wav";   break;
+            case 7: soundFiles[count++] = "سبعمئه.wav";  break;
+            case 8: soundFiles[count++] = "ثمانمئه.wav"; break;
+            case 9: soundFiles[count++] = "تسعمئه.wav";  break;
+        }
     }
-    
-   public static void abomunif() {
-	   SoundPlayer.play("مليون.wav");
-    }
-    
 }
