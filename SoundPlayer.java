@@ -52,7 +52,8 @@ public class SoundPlayer {
 		// We still need to sleep to prevent them playing on top of each other
 		try {
 			long duration = clip.getMicrosecondLength() / 1000;
-			Thread.sleep(duration - 50); // Small overlap for natural flow
+			long sleepTime = Math.max(0, duration - 50); // Prevent negative sleep
+			Thread.sleep(sleepTime);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

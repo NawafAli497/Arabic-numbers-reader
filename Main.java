@@ -49,7 +49,7 @@ public class Main {
         SOUND_TEXT.put("ثمانمئه.wav",          "ثمانمائة");
         SOUND_TEXT.put("تسعمئه.wav",           "تسعمائة");
         SOUND_TEXT.put("الف.wav",              "ألف");
-        SOUND_TEXT.put("الفان.wav",            "ألفان");
+        SOUND_TEXT.put("ألفان.wav",            "ألفان");
         SOUND_TEXT.put("الاف.wav",             "آلاف");
         SOUND_TEXT.put("مليون.wav",            "مليون");
         SOUND_TEXT.put("و.wav",                "و");
@@ -159,7 +159,7 @@ public class Main {
 
     static void processThousands(int t) {
         if      (t == 1)           soundFiles[count++] = "الف.wav";
-        else if (t == 2)           soundFiles[count++] = "الفان.wav";
+        else if (t == 2)           soundFiles[count++] = "ألفان.wav";
         else if (t >= 3 && t <= 10) { addOnesSound(t); soundFiles[count++] = "الاف.wav"; }
         else                       { processUpTo999(t); soundFiles[count++] = "الف.wav"; }
     }
